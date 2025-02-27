@@ -2,12 +2,17 @@ import * as THREE from 'three';
 import { TunnelScene } from './scenes/TunnelScene';
 import { CastleScene } from './scenes/CastleScene';
 import { CrystalScene } from './scenes/CrystalScene';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { BeachScene } from './scenes/BeachScene';
+import { GalaxyScene } from './scenes/GalaxyScene';
+import { CyberpunkScene } from './scenes/CyberpunkScene';
 
 export class SceneManager {
   private currentScene: any;
   private scenes: Map<string, any>;
   private renderer: THREE.WebGLRenderer;
   private camera: THREE.PerspectiveCamera;
+  private controls: OrbitControls;
   private clock: THREE.Clock;
 
   constructor(container: HTMLElement) {
@@ -15,8 +20,17 @@ export class SceneManager {
     this.setupRenderer(container);
     this.initScenes();
     
-    // Set initial camera position
-    this.camera.position.set(0, 0, 1);
+    // Setup orbit controls
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.05;
+    this.controls.rotateSpeed = 0.5;
+    this.controls.enableZoom = true;
+    this.controls.minDistance = 2;
+    this.controls.maxDistance = 20;
+    
+    // Set initial camera for cathedral
+    this.camera.position.set(0, 2, 12);
   }
 
   private setupRenderer(container: HTMLElement) {
@@ -39,16 +53,22 @@ export class SceneManager {
   private initScenes() {
     this.scenes = new Map();
     
-    // Initialize each scene
-    const tunnelScene = new TunnelScene(this.camera);
+    // Initialize scenes with cathedral first
     const castleScene = new CastleScene(this.camera);
+    const tunnelScene = new TunnelScene(this.camera);
     const crystalScene = new CrystalScene(this.camera);
+    const beachScene = new BeachScene(this.camera);
+    const galaxyScene = new GalaxyScene(this.camera);
+    const cyberpunkScene = new CyberpunkScene(this.camera);
     
-    this.scenes.set('tunnel', tunnelScene);
     this.scenes.set('castle', castleScene);
+    this.scenes.set('tunnel', tunnelScene);
     this.scenes.set('crystal', crystalScene);
+    this.scenes.set('beach', beachScene);
+    this.scenes.set('galaxy', galaxyScene);
+    this.scenes.set('cyberpunk', cyberpunkScene);
     
-    this.currentScene = tunnelScene;
+    this.currentScene = castleScene;
   }
 
   switchScene(sceneName: string) {
@@ -100,6 +120,9 @@ export class SceneManager {
   animate() {
     requestAnimationFrame(this.animate.bind(this));
     const elapsed = this.clock.getElapsedTime();
+    
+    // Update controls
+    this.controls.update();
     
     if (this.currentScene?.update) {
       this.currentScene.update(elapsed);
