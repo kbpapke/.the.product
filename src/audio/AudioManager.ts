@@ -32,13 +32,19 @@ export class AudioManager {
   private async setupSceneSynths() {
     if (!this.audioContext) return;
     
-    // Tunnel scene - fast arpeggiating synth like in .the .product
     const tunnelNodes = this.createTunnelSynth();
-    this.synthNodes.set('tunnel', tunnelNodes);
-    
-    // Cathedral scene - atmospheric pads
     const cathedralNodes = this.createCathedralSynth();
+    const crystalNodes = this.createCrystalSynth();
+    const beachNodes = this.createBeachSynth();
+    const galaxyNodes = this.createGalaxySynth();
+    const cyberpunkNodes = this.createCyberpunkSynth();
+    
+    this.synthNodes.set('tunnel', tunnelNodes);
     this.synthNodes.set('castle', cathedralNodes);
+    this.synthNodes.set('crystal', crystalNodes);
+    this.synthNodes.set('beach', beachNodes);
+    this.synthNodes.set('galaxy', galaxyNodes);
+    this.synthNodes.set('cyberpunk', cyberpunkNodes);
   }
 
   private createTunnelSynth(): AudioNode[] {
@@ -117,6 +123,188 @@ export class AudioManager {
       nodes.push({ osc, chorus, gain });
     }
     
+    return nodes;
+  }
+
+  private createCrystalSynth(): AudioNode[] {
+    // Add crystal-like sounds
+    const nodes: AudioNode[] = [];
+    const baseFreq = 220;
+    
+    for (let i = 0; i < 4; i++) {
+      const osc = this.audioContext!.createOscillator();
+      const filter = this.audioContext!.createBiquadFilter();
+      const gain = this.audioContext!.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(baseFreq * (i + 1), this.audioContext!.currentTime);
+      
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(baseFreq * (i + 1) * 2, this.audioContext!.currentTime);
+      filter.Q.setValueAtTime(10, this.audioContext!.currentTime);
+      
+      gain.gain.setValueAtTime(0.15 / (i + 1), this.audioContext!.currentTime);
+      
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.masterGain);
+      
+      osc.start();
+      nodes.push({ osc, filter, gain });
+    }
+    
+    return nodes;
+  }
+
+  private createBeachSynth(): AudioNode[] {
+    if (!this.audioContext || !this.masterGain) return [];
+    const nodes: AudioNode[] = [];
+
+    // Wave sounds
+    const waveOsc = this.audioContext.createOscillator();
+    const waveFilter = this.audioContext.createBiquadFilter();
+    const waveGain = this.audioContext.createGain();
+    const waveLFO = this.audioContext.createOscillator();
+    const waveLFOGain = this.audioContext.createGain();
+
+    waveOsc.type = 'noise' as OscillatorType;
+    waveOsc.frequency.setValueAtTime(0.1, this.audioContext.currentTime);
+    
+    waveFilter.type = 'lowpass';
+    waveFilter.frequency.setValueAtTime(400, this.audioContext.currentTime);
+    waveFilter.Q.setValueAtTime(10, this.audioContext.currentTime);
+
+    waveLFO.frequency.setValueAtTime(0.1, this.audioContext.currentTime);
+    waveLFOGain.gain.setValueAtTime(200, this.audioContext.currentTime);
+
+    waveGain.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+
+    waveLFO.connect(waveLFOGain);
+    waveLFOGain.connect(waveFilter.frequency);
+    waveOsc.connect(waveFilter);
+    waveFilter.connect(waveGain);
+    waveGain.connect(this.masterGain);
+
+    waveOsc.start();
+    waveLFO.start();
+
+    nodes.push({ osc: waveOsc, filter: waveFilter, gain: waveGain, lfo: waveLFO });
+
+    // Seagull-like sounds
+    for (let i = 0; i < 3; i++) {
+      const birdOsc = this.audioContext.createOscillator();
+      const birdFilter = this.audioContext.createBiquadFilter();
+      const birdGain = this.audioContext.createGain();
+
+      birdOsc.type = 'sine';
+      birdOsc.frequency.setValueAtTime(800 + i * 200, this.audioContext.currentTime);
+
+      birdFilter.type = 'bandpass';
+      birdFilter.frequency.setValueAtTime(1000 + i * 500, this.audioContext.currentTime);
+      birdFilter.Q.setValueAtTime(20, this.audioContext.currentTime);
+
+      birdGain.gain.setValueAtTime(0.01, this.audioContext.currentTime);
+
+      birdOsc.connect(birdFilter);
+      birdFilter.connect(birdGain);
+      birdGain.connect(this.masterGain);
+
+      birdOsc.start();
+      nodes.push({ osc: birdOsc, filter: birdFilter, gain: birdGain });
+    }
+
+    return nodes;
+  }
+
+  private createGalaxySynth(): AudioNode[] {
+    if (!this.audioContext || !this.masterGain) return [];
+    const nodes: AudioNode[] = [];
+
+    // Ethereal pad sounds
+    const frequencies = [220, 277.18, 329.63, 440]; // A3, C#4, E4, A4
+    frequencies.forEach((freq, i) => {
+      const osc = this.audioContext!.createOscillator();
+      const filter = this.audioContext!.createBiquadFilter();
+      const gain = this.audioContext!.createGain();
+      const lfo = this.audioContext!.createOscillator();
+      const lfoGain = this.audioContext!.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, this.audioContext!.currentTime);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(2000, this.audioContext!.currentTime);
+      filter.Q.setValueAtTime(5, this.audioContext!.currentTime);
+
+      lfo.frequency.setValueAtTime(0.1 + i * 0.05, this.audioContext!.currentTime);
+      lfoGain.gain.setValueAtTime(100, this.audioContext!.currentTime);
+
+      gain.gain.setValueAtTime(0.1, this.audioContext!.currentTime);
+
+      lfo.connect(lfoGain);
+      lfoGain.connect(filter.frequency);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.masterGain);
+
+      osc.start();
+      lfo.start();
+
+      nodes.push({ osc, filter, gain, lfo });
+    });
+
+    return nodes;
+  }
+
+  private createCyberpunkSynth(): AudioNode[] {
+    if (!this.audioContext || !this.masterGain) return [];
+    const nodes: AudioNode[] = [];
+
+    // Bass synth
+    const bassOsc = this.audioContext.createOscillator();
+    const bassFilter = this.audioContext.createBiquadFilter();
+    const bassGain = this.audioContext.createGain();
+
+    bassOsc.type = 'sawtooth';
+    bassOsc.frequency.setValueAtTime(55, this.audioContext.currentTime); // A1
+
+    bassFilter.type = 'lowpass';
+    bassFilter.frequency.setValueAtTime(500, this.audioContext.currentTime);
+    bassFilter.Q.setValueAtTime(15, this.audioContext.currentTime);
+
+    bassGain.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+
+    bassOsc.connect(bassFilter);
+    bassFilter.connect(bassGain);
+    bassGain.connect(this.masterGain);
+
+    bassOsc.start();
+    nodes.push({ osc: bassOsc, filter: bassFilter, gain: bassGain });
+
+    // Arpeggiator
+    const arpNotes = [220, 277.18, 329.63, 440, 554.37, 659.26];
+    arpNotes.forEach((freq, i) => {
+      const osc = this.audioContext!.createOscillator();
+      const filter = this.audioContext!.createBiquadFilter();
+      const gain = this.audioContext!.createGain();
+
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, this.audioContext!.currentTime);
+
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(freq * 2, this.audioContext!.currentTime);
+      filter.Q.setValueAtTime(5, this.audioContext!.currentTime);
+
+      gain.gain.setValueAtTime(0.1, this.audioContext!.currentTime);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.masterGain);
+
+      osc.start();
+      nodes.push({ osc, filter, gain });
+    });
+
     return nodes;
   }
 
