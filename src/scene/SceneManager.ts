@@ -72,57 +72,64 @@ export class SceneManager {
   }
 
   switchScene(sceneName: string) {
-    if (!this.scenes.has(sceneName)) return;
+    if (!this.scenes.has(sceneName)) {
+      console.warn(`Scene ${sceneName} not found`);
+      return;
+    }
+
+    // Reset controls target
+    this.controls.target.set(0, 0, 0);
     
-    // Smoothly move camera to new position
-    const targetPosition = new THREE.Vector3();
+    // Set camera position based on scene
     switch(sceneName) {
-      case 'tunnel':
-        targetPosition.set(0, 0, 1);
-        break;
       case 'castle':
-        targetPosition.set(0, 2, 12);
+        this.camera.position.set(0, 2, 12);
+        break;
+      case 'tunnel':
+        this.camera.position.set(0, 0, 1);
         break;
       case 'crystal':
-        targetPosition.set(0, 0, 8);
+        this.camera.position.set(0, 0, 8);
+        break;
+      case 'beach':
+        this.camera.position.set(0, 5, 15);
+        break;
+      case 'galaxy':
+        this.camera.position.set(0, 20, 50);
+        break;
+      case 'cyberpunk':
+        this.camera.position.set(20, 15, 20);
         break;
     }
 
-    // Smooth camera transition
-    const startPosition = this.camera.position.clone();
-    const duration = 1000; // 1 second transition
-    const startTime = Date.now();
+    // Update camera and controls
+    this.camera.lookAt(0, 0, 0);
+    this.controls.update();
 
-    const animateCamera = () => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      
-      // Smooth easing
-      const t = progress < .5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
-      
-      this.camera.position.lerpVectors(startPosition, targetPosition, t);
-      
-      if (progress < 1) {
-        requestAnimationFrame(animateCamera);
-      }
-    };
-
-    animateCamera();
+    // Switch to new scene
     this.currentScene = this.scenes.get(sceneName);
+    
+    // Log for debugging
+    console.log(`Switched to scene: ${sceneName}`);
   }
 
   reset() {
     this.initScenes();
     this.clock = new THREE.Clock();
-    this.camera.position.set(0, 0, 1);
+    
+    // Reset camera and controls
+    this.camera.position.set(0, 2, 12);
+    this.controls.target.set(0, 0, 0);
+    this.controls.update();
   }
 
   animate() {
     requestAnimationFrame(this.animate.bind(this));
-    const elapsed = this.clock.getElapsedTime();
     
     // Update controls
     this.controls.update();
+    
+    const elapsed = this.clock.getElapsedTime();
     
     if (this.currentScene?.update) {
       this.currentScene.update(elapsed);

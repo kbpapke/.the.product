@@ -8,7 +8,7 @@ function App() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [showInfo, setShowInfo] = React.useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentScene, setCurrentScene] = useState('tunnel');
+  const [currentScene, setCurrentScene] = useState('castle');
   const audioManager = useRef<AudioManager>();
   const sceneManager = useRef<SceneManager>();
 
@@ -19,12 +19,21 @@ function App() {
       sceneManager.current.animate();
 
       audioManager.current.onPlayingStateChanged(setIsPlaying);
-    }
 
-    return () => {
-      // Cleanup
-      audioManager.current?.restart();
-    };
+      // Set initial camera position for cathedral
+      sceneManager.current.switchScene('castle');
+
+      // Add resize handler
+      const handleResize = () => {
+        sceneManager.current?.onWindowResize();
+      };
+      window.addEventListener('resize', handleResize);
+
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        audioManager.current?.restart();
+      };
+    }
   }, []);
 
   const handleToggleAudio = () => {
